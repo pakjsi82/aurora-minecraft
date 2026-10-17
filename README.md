@@ -9,7 +9,8 @@ or visit the GitHub Pages link for this repository. No install or Minecraft need
 - Controls: mouse to look, WASD to move, F to fly, M for the map. On phones and tablets,
   use the on-screen joystick, drag to look, and the arrow buttons to jump or fly.
 - The Town Square block (library, 1885 Church Street School, performance hall, footbridge,
-  plaza and amphitheatre) is hand-built on the real footprints to match photos.
+  plaza and amphitheatre), Aurora Town Hall and the Aurora Seniors Centre are hand-built on
+  the real footprints to match photos.
 
 Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), available
 under the Open Database License (ODbL). World generated with
