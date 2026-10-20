@@ -61,6 +61,11 @@
   .tbtn:active { background:rgba(255,207,90,.55); }
   #tUp { bottom:104px; } #tDown { bottom:26px; display:none; }
   #overlay .card { max-height:calc(100vh - 24px); overflow:auto; }
+  #lockhint { position:fixed; left:50%; bottom:72px; transform:translateX(-50%); padding:8px 16px; font-size:14px; font-weight:600; white-space:nowrap; pointer-events:none; display:none; border-color:rgba(255,207,90,.55); }
+  #lockhint kbd { color:var(--accent); border-color:rgba(255,207,90,.6); font-size:13px; }
+  #lockhint.pulse { animation:lhpulse 1.1s ease-in-out 3; }
+  @keyframes lhpulse { 50% { background:rgba(255,207,90,.38); } }
+  @media (max-width:700px) { #lockhint { bottom:118px; } }
   #toast { position:fixed; left:50%; top:16px; transform:translateX(-50%); padding:7px 14px; font-size:13px; opacity:0; transition:opacity .3s; pointer-events:none; }
   @media (max-width:700px) { #mini { width:140px; height:140px; } #bar { flex-wrap:wrap; width:calc(100vw - 28px); justify-content:center; } #hud { min-width:0; } }
 </style>
@@ -80,6 +85,7 @@
 </div>
 <div id="mapview"><canvas id="bigmap"></canvas><div class="hint panel">Click anywhere to teleport there · <kbd>M</kbd> or <kbd>Esc</kbd> to close</div></div>
 <div id="toast" class="panel"></div>
+<div id="lockhint" class="panel" role="status"></div>
 <div id="touch"><div id="joy"><div id="knob"></div></div><button class="tbtn" id="tUp" aria-label="Jump or fly up">&#9650;</button><button class="tbtn" id="tDown" aria-label="Fly down">&#9660;</button></div>
 <div id="credit">Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a><span class="cr-extra"> &middot; built with <a href="https://github.com/louis-e/arnis" target="_blank" rel="noopener">Arnis</a></span></div>
 <div id="overlay">
@@ -550,7 +556,19 @@ tpSel.addEventListener("change", () => {
 // ------------------------------------------------------------------ input
 let locked = false;
 canvas.addEventListener("click", () => { if (!locked && started && !touchMode) canvas.requestPointerLock(); });
-document.addEventListener("pointerlockchange", () => { locked = document.pointerLockElement === canvas; });
+document.addEventListener("pointerlockchange", () => {
+  const was = locked;
+  locked = document.pointerLockElement === canvas;
+  updateHint(locked && !was);
+});
+// banner: tells people how to get their mouse back (Esc) and how to start looking again (click)
+function updateHint(pulse) {
+  const el = $("lockhint");
+  if (!started || touchMode || mapOpen || $("overlay").style.display !== "none") { el.style.display = "none"; return; }
+  el.innerHTML = locked ? 'Press <kbd>Esc</kbd> to free your mouse' : 'Click the view to look around &middot; <kbd>Esc</kbd> frees the mouse';
+  el.style.display = "block";
+  if (pulse) { el.classList.remove("pulse"); void el.offsetWidth; el.classList.add("pulse"); }
+}
 document.addEventListener("mousemove", (e) => {
   if (!locked) return;
   player.yaw -= e.movementX * 0.0023; player.pitch = Math.max(-1.55, Math.min(1.55, player.pitch - e.movementY * 0.0023));
@@ -596,7 +614,7 @@ addEventListener("keydown", (e) => {
   if (e.target.tagName === "SELECT" || e.target.tagName === "INPUT") return;
   if (e.code === "KeyF") setMode(!player.fly);
   else if (e.code === "KeyM") toggleMap();
-  else if (e.code === "KeyH") $("overlay").style.display = $("overlay").style.display === "none" ? "flex" : "none";
+  else if (e.code === "KeyH") { $("overlay").style.display = $("overlay").style.display === "none" ? "flex" : "none"; updateHint(); }
   else if (e.code === "Escape" && mapOpen) toggleMap(false);
   if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault();
   keys.add(e.code);
@@ -604,7 +622,7 @@ addEventListener("keydown", (e) => {
 addEventListener("keyup", (e) => keys.delete(e.code));
 addEventListener("blur", () => keys.clear());
 $("mode").onclick = () => setMode(!player.fly);
-$("help").onclick = () => { $("overlay").style.display = "flex"; };
+$("help").onclick = () => { $("overlay").style.display = "flex"; updateHint(); };
 $("dist").oninput = () => toast(`View distance ${$("dist").value} chunks`);
 
 // ------------------------------------------------------------------ maps
@@ -636,6 +654,7 @@ function toggleMap(force) {
   mapOpen = force === undefined ? !mapOpen : force;
   $("mapview").style.display = mapOpen ? "block" : "none";
   if (mapOpen) { if (locked) document.exitPointerLock(); drawBig(); }
+  updateHint();
 }
 function drawBig() {
   const dpr = devicePixelRatio || 1;
@@ -698,7 +717,7 @@ addEventListener("resize", () => { if (mapOpen) drawBig(); });
 window.__aurora = { player, setMode, teleport, meshes, frames: 0 };
 const go = $("go");
 go.disabled = false; go.textContent = "Start exploring"; setStatus("");
-go.onclick = () => { $("overlay").style.display = "none"; started = true; go.blur(); if (!touchMode) canvas.requestPointerLock(); };
+go.onclick = () => { $("overlay").style.display = "none"; started = true; go.blur(); updateHint(); if (!touchMode) canvas.requestPointerLock(); };
 $("where").textContent = "Yonge Street";
 
 const queue = [];
