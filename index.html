@@ -479,6 +479,7 @@ function collides(x, y, z) {
 }
 function groundAt(x, z) { for (let y = YB + 60; y >= YB; y--) if (isSolidBlock(Math.floor(x), y - 1, Math.floor(z)) && !isSolidBlock(Math.floor(x), y, Math.floor(z)) && !isSolidBlock(Math.floor(x), y + 1, Math.floor(z))) return y; return YB; }
 function setMode(fly) {
+  if (fly && !player.fly) player.y += 2.5;                    // lift off the ground when switching to fly
   player.fly = fly; player.vy = 0; $("mode").textContent = fly ? "Fly" : "Walk";
   $("tDown").style.display = fly ? "block" : "none";
   if (!fly && collides(player.x, player.y, player.z)) player.y = groundAt(player.x, player.z);
@@ -733,7 +734,7 @@ function frame(now) {
   gl.viewport(0, 0, cw, ch);
 
   const R = +$("dist").value, far = R * 16 + 400;
-  const eye = [player.x, player.y + (player.fly ? 0 : EYE), player.z];
+  const eye = [player.x, player.y + EYE, player.z];          // eye height in both walk and fly mode
   const proj = perspective(1.2, cw / ch, 0.08, far);
   const VP = mul(proj, viewMat(eye, player.yaw, player.pitch));
   const planes = frustum(VP);
