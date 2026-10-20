@@ -536,7 +536,7 @@ function nearestStreet(x, z) {
 const tpSel = $("tp");
 const sorted = [...LM].sort((a, b) => a.name.localeCompare(b.name));
 sorted.forEach(l => { const o = document.createElement("option"); o.value = l.name; o.textContent = l.name; tpSel.appendChild(o); });
-{ const o = document.createElement("option"); o.value = "__spawn"; o.textContent = "Yonge & Wellington (start)"; tpSel.insertBefore(o, tpSel.children[1]); }
+{ const o = document.createElement("option"); o.value = "__spawn"; o.textContent = "Yonge & Wellington (street level)"; tpSel.insertBefore(o, tpSel.children[1]); }
 function teleport(x, z, look) {
   if (look) {
     player.x = x; player.z = z + 72; player.y = YB + 30; player.yaw = 0; player.pitch = -0.36; setMode(true);
@@ -547,6 +547,15 @@ function goTo(l) {
     player.x = l.view.x; player.z = l.view.z; player.y = YB + l.view.h; player.yaw = l.view.yaw; player.pitch = l.view.pitch; setMode(true);
   } else teleport(l.x, l.z, true);
   toast(l.name);
+}
+// start flying above Aurora Town Square, at the aerial-photo angle
+{
+  const s0 = LM.find(l => l.name === "Aurora Town Square" && l.view);
+  if (s0) {
+    const v = s0.view;
+    player.x = v.x; player.z = v.z; player.y = YB + v.h; player.yaw = v.yaw; player.pitch = v.pitch;
+    player.fly = true; $("mode").textContent = "Fly"; $("tDown").style.display = "block";
+  }
 }
 tpSel.addEventListener("change", () => {
   const v = tpSel.value; tpSel.value = ""; tpSel.blur();
@@ -719,7 +728,7 @@ window.__aurora = { player, setMode, teleport, meshes, frames: 0 };
 const go = $("go");
 go.disabled = false; go.textContent = "Start exploring"; setStatus("");
 go.onclick = () => { $("overlay").style.display = "none"; started = true; go.blur(); updateHint(); if (!touchMode) canvas.requestPointerLock(); };
-$("where").textContent = "Yonge Street";
+$("where").textContent = player.fly ? "Aurora Town Square" : "Yonge Street";
 
 const queue = [];
 let last = performance.now(), hudT = 0;
